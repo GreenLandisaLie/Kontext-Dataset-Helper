@@ -1,0 +1,229 @@
+﻿<Window x:Class="KontextDatasetHelper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Image Masking Tool" Height="1080" Width="1920" WindowState="Maximized"
+        Background="#2d2d2d" Foreground="White" FontWeight="Bold" 
+        MouseLeftButtonDown="Window_MouseLeftButtonDown" PreviewMouseWheel="Window_PreviewMouseWheel" KeyDown="Window_KeyDown"
+        Loaded="Window_Loaded">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome GlassFrameThickness="0" CornerRadius="0" CaptionHeight="40" />
+    </WindowChrome.WindowChrome>
+    <Window.Resources>
+        <Style x:Key="TitleBarButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="bdr_main" BorderThickness="1" BorderBrush="Transparent" Background="Transparent">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Content" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bdr_main" Property="Background" Value="#474747" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bdr_main" Property="Background" Value="#474747" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Name="MainGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Name="TitleBarGrid" Background="{Binding Background1}" Grid.Row="0">
+            <WrapPanel HorizontalAlignment="left" VerticalAlignment="Center" Margin="5,0,0,0">
+                <Image Source="/Resources/Images/titlebar.png"  VerticalAlignment="Center" HorizontalAlignment="Left"/>
+            </WrapPanel>
+            <TextBlock Name="TitleBarTextBox"  Foreground="White" FontSize="14" Margin="5,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource TitleBarButtonStyle}" x:Name="buttonMinimize" Width="40" Background="Transparent" BorderBrush="Transparent" WindowChrome.IsHitTestVisibleInChrome="True" Click="buttonMinimize_Click">
+                    <Image Source="/Resources/Images/minimize.png" Width="30" Height="30" />
+                </Button>
+                <Button Style="{StaticResource TitleBarButtonStyle}" x:Name="buttonMaximize" Width="40" Background="Transparent" BorderBrush="Transparent" WindowChrome.IsHitTestVisibleInChrome="True" Click="buttonMaximize_Click">
+                    <Image x:Name="maximizeImage" Source="/Resources/Images/maximize.png" Width="30" Height="30" />
+                </Button>
+                <Button Style="{StaticResource TitleBarButtonStyle}" x:Name="buttonClose" Width="40" Background="Transparent" BorderBrush="Transparent" WindowChrome.IsHitTestVisibleInChrome="True" Click="buttonClose_Click">
+                    <Image Source="/Resources/Images/close.png" Width="30" Height="30" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <Grid Name="SubGrid" Grid.Row="1" Background="{Binding Background1}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Base" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="White" FontWeight="Bold"/>
+            <TextBlock Text="Ref" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="White" FontWeight="Bold"/>
+            <TextBlock Text="Merge (slider: Main-Merge)" Grid.Column="2" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="White" FontWeight="Bold"/>
+
+            <Grid Grid.Column="0" Grid.Row="1" Margin="10,0,10,0" Background="{Binding Background2}">
+                <Border BorderBrush="Gray" BorderThickness="1">
+                    <Grid>
+                        <Image x:Name="BaseImageDisplay" Stretch="Uniform" SizeChanged="ImageDisplay_SizeChanged"/>
+                        <Image x:Name="BaseDiffImageDisplay" Stretch="Uniform"/>
+                        <Image x:Name="BaseMaskDisplay" Stretch="Uniform"/>
+                        <Canvas x:Name="BaseMaskCanvas" ClipToBounds="True" Background="Transparent" MouseDown="MaskCanvas_MouseDown" MouseMove="MaskCanvas_MouseMove" MouseUp="MaskCanvas_MouseUp" MouseLeave="MaskCanvas_MouseLeave" Tag="Base" Cursor="Pen"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid Grid.Column="1" Grid.Row="1" Margin="10,0,10,0" Background="{Binding Background2}">
+                <Border BorderBrush="Gray" BorderThickness="1">
+                    <Grid>
+                        <Image x:Name="RefImageDisplay" Stretch="Uniform" SizeChanged="ImageDisplay_SizeChanged"/>
+                        <Image x:Name="RefDiffImageDisplay" Stretch="Uniform"/>
+                        <Image x:Name="RefMaskDisplay" Stretch="Uniform" IsHitTestVisible="False"/>
+                        <Canvas x:Name="RefMaskCanvas" ClipToBounds="True" Background="Transparent" MouseDown="MaskCanvas_MouseDown" MouseMove="MaskCanvas_MouseMove" MouseUp="MaskCanvas_MouseUp" MouseLeave="MaskCanvas_MouseLeave" Tag="Ref" Cursor="Pen"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid x:Name="MergedImageMainGrid" Grid.Column="2" Grid.Row="1" Margin="10,0,10,0" Background="{Binding Background2}">
+                <Border BorderBrush="Gray" BorderThickness="1">
+                    <Grid x:Name="MergedImageGrid">
+                        <Image x:Name="MergedImageDisplay" Stretch="Uniform"/>
+                        <Image x:Name="MergedDiffImageDisplay" Stretch="Uniform"/>
+
+                        <!-- Overlay image with clip -->
+                        <Grid>
+                            <Image x:Name="BaseOrRefComparerDisplay" Stretch="Uniform">
+                                <Image.Clip>
+                                    <RectangleGeometry x:Name="ClipRectangle" />
+                                </Image.Clip>
+                            </Image>
+                        </Grid>
+
+                        <Rectangle x:Name="MergedSliderLine" Visibility="Hidden" Width="2" Fill="Black" HorizontalAlignment="Left" VerticalAlignment="Stretch" />
+                    </Grid>
+                </Border>
+                <Slider x:Name="MergedImageSlider" Opacity="0.33" Minimum="0" VerticalAlignment="Bottom" Maximum="1" Value="0"  TickFrequency="0.01" IsSnapToTickEnabled="False" ValueChanged="MergedImageSlider_ValueChanged"/>
+            </Grid>
+
+            <StackPanel Name="MyStackPanel" Background="{Binding Background2}" Grid.ColumnSpan="3" Grid.Row="2" Margin="0,10,0,10" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+
+                <Button Content="Previous" Margin="5,20,5,20" Click="Previous_Click" Background="{Binding Background3}" Foreground="{Binding ForeGroundOrange}" FontWeight="Bold">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border CornerRadius="50" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="5,3">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5">
+                    <Button Content="Undo" Margin="0,0,0,5" Click="Undo_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                    <Button Content="Redo" Margin="0,5,0,0" Click="Redo_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5">
+                    <Button Content="Clear Masks" Margin="0,0,0,5" Click="ClearMasks_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                    <Button Name="ToggleMasksButton" Content="Hide Masks" Margin="0,5,0,0" Click="ToggleMasks_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5">
+                    <Button Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Content="Set Captions" Margin="0,0,0,5" Click="SetCaptions_Click" Padding="5,3"/>
+                    <ComboBox Name="captionComboBox" DisplayMemberPath="Content" SelectedValuePath="Value" VerticalAlignment="Center" Margin="0,5,0,0" SelectionChanged="CaptionComboBox_SelectionChanged" Padding="5,3"/>
+                </StackPanel>
+
+
+                <Button Name="SetMainImgButton" Margin="5,20,5,20" Click="SetMainImg_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3">
+                    <TextBlock Name="SetMainImgButtonTextBlock" TextAlignment="Center">Main is: Ref<LineBreak/>(Draw on Base)</TextBlock>
+                </Button>
+
+
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5">
+                    <Button Name="ShowBaseDiffButton" Content="Show Base-Ref Difference" Margin="0,0,0,5" Click="ShowBaseDifference_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold"/>
+                    <Button Name="ShowRefDiffButton" Content="Show Ref-Base Difference" Margin="0,0,0,5" Click="ShowRefDifference_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold"/>
+                    <Button Name="ShowMergeDiffButton" Content="Show Merge-Main Difference" Margin="0,0,0,0" Click="ShowMergeDifference_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold"/>
+                </StackPanel>
+
+
+                <StackPanel Orientation="Vertical" Margin="10,0,10,0" VerticalAlignment="Center" Width="300">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding ElementName=BrushSizeSlider, Path=Value, StringFormat='Brush: {0:F0}'}" Foreground="White" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <Slider Grid.Column="1" x:Name="BrushSizeSlider" Minimum="1" Maximum="200" Value="20" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding ElementName=DiffThresSlider, Path=Value, StringFormat='Diff Thres: {0:F0}'}" Foreground="White" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <Slider Grid.Column="1" x:Name="DiffThresSlider" Minimum="0" Maximum="255" Value="5" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" ValueChanged="OnDiffThresValueChanged"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding ElementName=MinRegionSlider, Path=Value, StringFormat='[AM] Min % Region: {0:F0}'}" Foreground="White" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <Slider Grid.Column="1" x:Name="MinRegionSlider" Minimum="0" Maximum="100" Value="5" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" ValueChanged="OnMinRegionValueChanged"/>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding ElementName=ColorToleranceSlider, Path=Value, StringFormat='[AM] Color Thres: {0:F0}'}" Foreground="White" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <Slider Grid.Column="1" x:Name="ColorToleranceSlider" Minimum="0" Maximum="255" Value="2" TickFrequency="1" IsSnapToTickEnabled="True" SmallChange="1" ValueChanged="OnColorToleranceValueChanged"/>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5">
+                    <Button Name="InvertedDiffMaskButton" Content="Apply Inverted Diff Mask" Margin="0,0,0,5" Click="InvertedDiff_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                    <Button Name="AutoMaskButton" Content="Apply Auto Mask (flawed)" Margin="0,0,0,5" Click="AutoMask_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                </StackPanel>
+
+                <Button Name="SaveButton" Content="Apply and Save" Margin="5,20,5,20" Click="ApplyAndSave_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+
+                <Button Content="  Next  " Margin="5,20,5,20" Click="Next_Click" Background="{Binding Background3}" Foreground="{Binding ForeGroundOrange}" FontWeight="Bold">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border CornerRadius="50" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="5,3">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+            </StackPanel>
+
+
+
+            <TextBox x:Name="CaptionInputTextBox"
+                Grid.ColumnSpan="3" Grid.Row="1"
+                VerticalAlignment="Center" HorizontalAlignment="Center"
+                Width="Auto" Height="Auto" MinWidth="200" MinHeight="200"
+                TextWrapping="Wrap" AcceptsReturn="True"
+                Visibility="Collapsed"
+                Margin="20"
+                FontSize="16"
+                Background="LightYellow" BorderBrush="Gray" BorderThickness="2"/>
+        </Grid>
+
+    </Grid>
+</Window>
