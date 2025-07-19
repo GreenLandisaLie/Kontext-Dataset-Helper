@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,19 +9,13 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Shapes;
-using System.Runtime.InteropServices; // For async operations
 using static KontextDatasetHelper.Utils;
-using static System.Net.Mime.MediaTypeNames;
-using System.Diagnostics;
-using System.Windows.Media.Media3D;
 
 
 namespace KontextDatasetHelper
 {
     public partial class MainWindow : Window
     {
-        private bool debugMode = false;
-
         private string INFO =
             "- Ensure you have Python installed and added to PATH.\n" +
             "- Ensure you have Pillow (python package) installed and accessible globally.\n" +
@@ -54,8 +48,9 @@ namespace KontextDatasetHelper
             "# In that case - since you are already inspecting the images here - might as well set the captions too.",
             "# Once you write the captions here you can pick which one to apply in the DropDownMenu next to the 'Set Captions' button.",
             "# The selected caption will be written upon pressing the 'save' button.",
-            "# TIP: If you want to bind a name of a caption to the DropDownMenu then you can do so like this:",
+            "# TIP1: If you want to bind a name of a caption to the DropDownMenu then you can do so like this:",
             "#        [NAME:YOUR CAPTION NAME HERE] YOUR ACTUAL CAPTION HERE",
+            "# TIP2: Use Ctrl/Shift/Alt + Number/NumpadNumber as shortcuts for caption selection by index (order).",
             "# (Press the 'Set Captions' button again to close the textbox)", "", ""
         };
 
@@ -451,7 +446,7 @@ namespace KontextDatasetHelper
                     tempBitmap.CopyPixels(pixels, stride, 0);
                     tempWriteableBitmap.WritePixels(new Int32Rect(0, 0, tempBitmap.PixelWidth, tempBitmap.PixelHeight), pixels, stride, 0);
                     tempWriteableBitmap.Freeze(); // Make it usable across threads
-                    
+
                     _currentBaseImageOriginal = tempWriteableBitmap;
                 }
 
@@ -471,7 +466,7 @@ namespace KontextDatasetHelper
                     tempBitmap.CopyPixels(pixels, stride, 0);
                     tempWriteableBitmap.WritePixels(new Int32Rect(0, 0, tempBitmap.PixelWidth, tempBitmap.PixelHeight), pixels, stride, 0);
                     tempWriteableBitmap.Freeze(); // Make it usable across threads
-                    
+
                     _currentRefImageOriginal = tempWriteableBitmap;
                 }
 
@@ -699,9 +694,9 @@ namespace KontextDatasetHelper
             return false;
         }
 
-        private void UpdateComboBoxItems()
+        private void UpdateComboBoxItems(int selectedIndex = -1)
         {
-            if (CaptionsChanged() || captionComboBox.Items.Count == 0)
+            if (CaptionsChanged() || captionComboBox.Items.Count == 0 || selectedIndex != -1)
             {
                 _previousCaptions.Clear();
                 _previousCaptions.AddRange(_captions);
@@ -715,8 +710,8 @@ namespace KontextDatasetHelper
                 }
 
                 _currentDropDownItemsCount = _captions.Count + 1;
-
-                captionComboBox.SelectedIndex = 0; // Select 'None' by default
+                
+                captionComboBox.SelectedIndex = selectedIndex < 0 ? 0 : selectedIndex > _captions.Count ? _captions.Count : selectedIndex;
             }
 
             UpdateSaveButton();
@@ -844,19 +839,65 @@ namespace KontextDatasetHelper
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (CaptionInputTextBox.Visibility != Visibility.Visible && Keyboard.Modifiers == ModifierKeys.Control)
+            if (CaptionInputTextBox.Visibility != Visibility.Visible 
+                && (Keyboard.Modifiers == ModifierKeys.Control || Keyboard.Modifiers == ModifierKeys.Shift || Keyboard.Modifiers == ModifierKeys.Alt))
             {
-                if (e.Key == Key.Z)
+                if (Keyboard.Modifiers == ModifierKeys.Control)
                 {
-                    Undo();
+                    if (e.Key == Key.Z)
+                    {
+                        Undo();
 
-                    // Optionally, if you want to prevent the event from being handled by other controls
-                    // or the default behavior (like undo in a TextBox), you can set e.Handled = true;
-                    //e.Handled = true;
+                        // Optionally, if you want to prevent the event from being handled by other controls
+                        // or the default behavior (like undo in a TextBox), you can set e.Handled = true;
+                        //e.Handled = true;
+                    }
+                    else if (e.Key == Key.Y)
+                    {
+                        Redo();
+                    }
                 }
-                else if (e.Key == Key.Y)
+                
+                // these will work with ctrl/shift/alt
+                if (e.Key == Key.D0 || e.Key == Key.NumPad0)
                 {
-                    Redo();
+                    UpdateComboBoxItems(0);
+                }
+                else if (e.Key == Key.D1 || e.Key == Key.NumPad1)
+                {
+                    UpdateComboBoxItems(1);
+                }
+                else if (e.Key == Key.D2 || e.Key == Key.NumPad2)
+                {
+                    UpdateComboBoxItems(2);
+                }
+                else if (e.Key == Key.D3 || e.Key == Key.NumPad3)
+                {
+                    UpdateComboBoxItems(3);
+                }
+                else if (e.Key == Key.D4 || e.Key == Key.NumPad4)
+                {
+                    UpdateComboBoxItems(4);
+                }
+                else if (e.Key == Key.D5 || e.Key == Key.NumPad5)
+                {
+                    UpdateComboBoxItems(5);
+                }
+                else if (e.Key == Key.D6 || e.Key == Key.NumPad6)
+                {
+                    UpdateComboBoxItems(6);
+                }
+                else if (e.Key == Key.D7 || e.Key == Key.NumPad7)
+                {
+                    UpdateComboBoxItems(7);
+                }
+                else if (e.Key == Key.D8 || e.Key == Key.NumPad8)
+                {
+                    UpdateComboBoxItems(8);
+                }
+                else if (e.Key == Key.D9 || e.Key == Key.NumPad9)
+                {
+                    UpdateComboBoxItems(9);
                 }
             }
         }
