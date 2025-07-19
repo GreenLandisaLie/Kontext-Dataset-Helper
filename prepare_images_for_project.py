@@ -43,10 +43,10 @@ def convert_to_png_if_needed(filepath):
                 img.save(new_filepath, "PNG")
                 print(f"Converted {os.path.basename(filepath)} to PNG: {os.path.basename(new_filepath)}")
                 
-                # Remove the original file if conversion was successful
-                if os.path.exists(new_filepath):
-                    os.remove(filepath)
-                    print(f"Removed original file: {os.path.basename(filepath)}")
+            # Remove the original file if conversion was successful
+            if new_filepath and os.path.exists(new_filepath):
+                os.remove(filepath)
+                print(f"Removed original file: {os.path.basename(filepath)}")
 
         except Exception as e:
             print(f"Failed to convert {os.path.basename(filepath)} to PNG: {e}")
