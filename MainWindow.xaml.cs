@@ -428,47 +428,8 @@ namespace KontextDatasetHelper
 
             if (File.Exists(BaseImagePath) && File.Exists(RefImagePath))
             {
-                // Use BitmapImage directly for loading as it can handle file streams
-                // We need to use a MemoryStream to prevent file locking issues
-                using (FileStream fs = new FileStream(BaseImagePath, FileMode.Open, FileAccess.Read))
-                {
-                    BitmapImage tempBitmap = new BitmapImage();
-                    tempBitmap.BeginInit();
-                    tempBitmap.CacheOption = BitmapCacheOption.OnLoad; // Load entire image into memory
-                    tempBitmap.StreamSource = fs;
-                    tempBitmap.EndInit();
-                    tempBitmap.Freeze(); // Make it usable across threads
-
-                    // THIS WILL FIX DPI MISMATCH
-                    WriteableBitmap tempWriteableBitmap = new WriteableBitmap(tempBitmap.PixelWidth, tempBitmap.PixelHeight, 96, 96, PixelFormats.Bgra32, null);
-                    int stride = tempBitmap.PixelWidth * 4;
-                    byte[] pixels = new byte[stride * tempBitmap.PixelHeight];
-                    tempBitmap.CopyPixels(pixels, stride, 0);
-                    tempWriteableBitmap.WritePixels(new Int32Rect(0, 0, tempBitmap.PixelWidth, tempBitmap.PixelHeight), pixels, stride, 0);
-                    tempWriteableBitmap.Freeze(); // Make it usable across threads
-
-                    _currentBaseImageOriginal = tempWriteableBitmap;
-                }
-
-                using (FileStream fs = new FileStream(RefImagePath, FileMode.Open, FileAccess.Read))
-                {
-                    BitmapImage tempBitmap = new BitmapImage();
-                    tempBitmap.BeginInit();
-                    tempBitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    tempBitmap.StreamSource = fs;
-                    tempBitmap.EndInit();
-                    tempBitmap.Freeze(); // Make it usable across threads
-
-                    // THIS WILL FIX DPI MISMATCH
-                    WriteableBitmap tempWriteableBitmap = new WriteableBitmap(tempBitmap.PixelWidth, tempBitmap.PixelHeight, 96, 96, PixelFormats.Bgra32, null);
-                    int stride = tempBitmap.PixelWidth * 4;
-                    byte[] pixels = new byte[stride * tempBitmap.PixelHeight];
-                    tempBitmap.CopyPixels(pixels, stride, 0);
-                    tempWriteableBitmap.WritePixels(new Int32Rect(0, 0, tempBitmap.PixelWidth, tempBitmap.PixelHeight), pixels, stride, 0);
-                    tempWriteableBitmap.Freeze(); // Make it usable across threads
-
-                    _currentRefImageOriginal = tempWriteableBitmap;
-                }
+                _currentBaseImageOriginal = LoadBitmap(BaseImagePath);
+                _currentRefImageOriginal = LoadBitmap(RefImagePath);
 
                 if (_currentBaseImageOriginal.PixelWidth != _currentRefImageOriginal.PixelWidth || _currentBaseImageOriginal.PixelHeight != _currentRefImageOriginal.PixelHeight)
                 {
