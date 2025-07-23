@@ -14,6 +14,54 @@ namespace KontextDatasetHelper
 {
     public static class Utils
     {
+        public static BitmapSource LoadBitmap(string imagePath)
+		{
+			BitmapSource imageSource = null;
+			using (FileStream fs = new FileStream(imagePath, FileMode.Open, FileAccess.Read))
+			{
+				BitmapImage tempBitmap = new BitmapImage();
+				tempBitmap.BeginInit();
+				tempBitmap.CacheOption = BitmapCacheOption.OnLoad;
+				tempBitmap.StreamSource = fs;
+				tempBitmap.EndInit();
+				tempBitmap.Freeze();
+		
+				BitmapSource sourceToConvert = tempBitmap;
+				if (tempBitmap.Format != PixelFormats.Bgr32)
+				{
+					FormatConvertedBitmap converter = new FormatConvertedBitmap(tempBitmap, PixelFormats.Bgr32, null, 0);
+					converter.Freeze();
+					sourceToConvert = converter;
+				}
+		
+				// Now, apply the DPI fix using the Pbgra32 source
+				if (sourceToConvert.DpiX != 96 || sourceToConvert.DpiY != 96)
+				{
+					WriteableBitmap tempWriteableBitmap = new WriteableBitmap(
+						sourceToConvert.PixelWidth,
+						sourceToConvert.PixelHeight,
+						96, // Target DPI X
+						96, // Target DPI Y
+						PixelFormats.Bgra32,
+						null);
+		
+					int stride = sourceToConvert.PixelWidth * 4;
+					byte[] pixels = new byte[stride * sourceToConvert.PixelHeight];
+					sourceToConvert.CopyPixels(new Int32Rect(0, 0, sourceToConvert.PixelWidth, sourceToConvert.PixelHeight), pixels, stride, 0);
+		
+					tempWriteableBitmap.WritePixels(new Int32Rect(0, 0, sourceToConvert.PixelWidth, sourceToConvert.PixelHeight), pixels, stride, 0);
+					tempWriteableBitmap.Freeze();
+					
+					imageSource = tempWriteableBitmap;
+				}
+				else
+				{
+					imageSource = sourceToConvert;
+				}
+			}
+			return imageSource;
+		}
+        
         public static Point GetImageRelativePoint(Image imageControl, Point mousePos)
         {
             if (imageControl.Source == null)
