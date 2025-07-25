@@ -1,4 +1,4 @@
-﻿<Window x:Class="KontextDatasetHelper.MainWindow"
+<Window x:Class="KontextDatasetHelper.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Image Masking Tool" Height="1080" Width="1920" WindowState="Maximized"
@@ -194,11 +194,19 @@
                 </StackPanel>
 
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5">
+                    <Button Name="InvertBaseMaskButton" Content="Invert Base Mask" Margin="0,0,0,5" Click="InvertBaseMask_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                    <Button Name="InvertRefMaskButton" Content="Invert Ref  Mask" Margin="0,0,0,5" Click="InvertRefMask_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5">
                     <Button Name="InvertedDiffMaskButton" Content="Apply Inverted Diff Mask" Margin="0,0,0,5" Click="InvertedDiff_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
                     <Button Name="AutoMaskButton" Content="Apply Auto Mask (flawed)" Margin="0,0,0,5" Click="AutoMask_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
                 </StackPanel>
 
-                <Button Name="SaveButton" Content="Apply and Save" Margin="5,20,5,20" Click="ApplyAndSave_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5">
+                    <Button Name="SaveButton" Content="Apply and Save" Margin="0,0,0,5" Click="ApplyAndSave_Click" Background="{Binding Background3}" Foreground="White" FontWeight="Bold" Padding="5,3"/>
+                    <Button Name="DeleteButton" Content="Delete this pair" Margin="0,0,0,5" Click="Delete_Click" Background="{Binding Background3}" Foreground="Red" FontWeight="Bold" Padding="5,3"/>
+                </StackPanel>
 
                 <Button Content="  Next  " Margin="5,20,5,20" Click="Next_Click" Background="{Binding Background3}" Foreground="{Binding ForeGroundOrange}" FontWeight="Bold">
                     <Button.Template>
