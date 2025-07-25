@@ -56,6 +56,7 @@ namespace KontextDatasetHelper
 
 
         private string _rootDirectory = "";
+        private string _deletedDirectory = "";
         private string _baseImageDirectory = "";
         private string _refImageDirectory = "";
         private string _storeDirectory = "";
@@ -281,6 +282,7 @@ namespace KontextDatasetHelper
                 Environment.Exit(0);
             }
 
+            _deletedDirectory = _rootDirectory + "\\deleted";
             _baseImageDirectory = _rootDirectory + "\\base";
             _refImageDirectory = _rootDirectory + "\\ref";
 
@@ -289,6 +291,7 @@ namespace KontextDatasetHelper
                 if (Directory.Exists(@"O:\SD\DATASETS\test")) // hardcoded a test dataset to make it easier for me to debug
                 {
                     _rootDirectory = @"O:\SD\DATASETS\test";
+                    _deletedDirectory = _rootDirectory + "\\deleted";
                     _baseImageDirectory = _rootDirectory + "\\base";
                     _refImageDirectory = _rootDirectory + "\\ref";
                 }
@@ -310,6 +313,10 @@ namespace KontextDatasetHelper
 
             foreach (string dir in new string[]
             {
+                _deletedDirectory,
+                _deletedDirectory + "\\base",
+                _deletedDirectory + "\\ref",
+
                 _storeDirectory,
                 _storeBaseImageDirectory,
                 _storeRefImageDirectory,
@@ -379,16 +386,24 @@ namespace KontextDatasetHelper
             {
                 baseFiles.AddRange(Directory.GetFiles(_baseImageDirectory, "*" + validExt, SearchOption.TopDirectoryOnly)
                                     .Select(System.IO.Path.GetFileName)
-                                    .ToList());
+                                    .ToList()
+                                    .ConvertAll(fn => fn.ToLower()));
                 refFiles.AddRange(Directory.GetFiles(_refImageDirectory, "*" + validExt, SearchOption.TopDirectoryOnly)
                                     .Select(System.IO.Path.GetFileName)
-                                    .ToList());
+                                    .ToList()
+                                    .ConvertAll(fn => fn.ToLower()));
                 storeBaseFiles.AddRange(Directory.GetFiles(_storeBaseImageDirectory, "*" + validExt, SearchOption.TopDirectoryOnly)
                                     .Select(System.IO.Path.GetFileName)
-                                    .ToList());
+                                    .ToList()
+                                    .ConvertAll(fn => fn.ToLower()));
             }
 
-            _imageFileNames = baseFiles.Intersect(refFiles).OrderBy(f => f).Where(f => !storeBaseFiles.Contains(f)).ToList();
+            _imageFileNames = baseFiles.Intersect(refFiles).OrderBy(f => f)
+                .Where(f => 
+                    !storeBaseFiles.Contains(System.IO.Path.GetFileNameWithoutExtension(f) + ".jpg") &&
+                    !storeBaseFiles.Contains(System.IO.Path.GetFileNameWithoutExtension(f) + ".jpeg") &&
+                    !storeBaseFiles.Contains(System.IO.Path.GetFileNameWithoutExtension(f) + ".png")
+                    ).ToList();
 
             if (!_imageFileNames.Any())
             {
@@ -538,6 +553,16 @@ namespace KontextDatasetHelper
                     {
                     }
                 }
+            }
+        }
+
+        private void Delete_Click(object sender, RoutedEventArgs e)
+        {
+            if (MessageBoxResult.Yes == MessageBox.Show("This pair will be moved to \\deleted folder.\n\nAre you sure about this?", "Move to \\deleted ?", MessageBoxButton.YesNo))
+            {
+                System.IO.File.Move(BaseImagePath, _deletedDirectory + "\\base\\" + System.IO.Path.GetFileName(BaseImagePath));
+                System.IO.File.Move(RefImagePath, _deletedDirectory + "\\ref\\" + System.IO.Path.GetFileName(RefImagePath));
+                Next_Click(null, null);
             }
         }
 
@@ -765,6 +790,16 @@ namespace KontextDatasetHelper
         private void InvertedDiff_Click(object sender, RoutedEventArgs e)
         {
             UpdateAutoMask(true, true);
+        }
+
+        private void InvertBaseMask_Click(object sender, RoutedEventArgs e)
+        {
+            InvertCurrentMask(true);
+        }
+
+        private void InvertRefMask_Click(object sender, RoutedEventArgs e)
+        {
+            InvertCurrentMask(false);
         }
 
         private void ToggleMasks_Click(object sender, RoutedEventArgs e)
@@ -1337,6 +1372,21 @@ namespace KontextDatasetHelper
                 UpdateMergeAndDiff(isClick);
             }
         }
+        
+        private void InvertCurrentMask(bool isBase)
+        {
+            Utils.InvertCurrentMask(isBase ? _baseMaskBitmap : _refMaskBitmap);
+            if (isBase)
+            {
+                
+                BaseMaskDisplay.Source = _baseMaskBitmap; // re-assign to force update
+            }
+            else
+            {
+                RefMaskDisplay.Source = _refMaskBitmap; // re-assign to force update
+            }
+            UpdateMergeAndDiff(true);
+        }
         #endregion
 
 
@@ -1395,6 +1445,8 @@ namespace KontextDatasetHelper
             }
             ClearMasks(true, false);
         }
+
+
 
 
         #endregion
