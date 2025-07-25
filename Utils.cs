@@ -322,6 +322,84 @@ namespace KontextDatasetHelper
 
 
         /// <summary>
+        /// Inverts the colors of a WriteableBitmap mask.
+        /// Red pixels become fully transparent, and transparent pixels become red.
+        /// </summary>
+        /// <param name="maskBitmap">The WriteableBitmap representing the mask.</param>
+        public static void InvertCurrentMask(WriteableBitmap maskBitmap)
+        {
+            if (maskBitmap == null)
+            {
+                throw new ArgumentNullException(nameof(maskBitmap), "The maskBitmap cannot be null.");
+            }
+
+            // Lock the bitmap to get access to its back buffer.
+            maskBitmap.Lock();
+
+            try
+            {
+                // Get the back buffer pointer.
+                IntPtr pBackBuffer = maskBitmap.BackBuffer;
+
+                // Get the stride (width of a single row of pixels, in bytes).
+                int stride = maskBitmap.BackBufferStride;
+
+                // Calculate the total number of pixels.
+                int pixelCount = maskBitmap.PixelWidth * maskBitmap.PixelHeight;
+
+                // Determine the bytes per pixel (Bgra32 is 4 bytes per pixel).
+                int bytesPerPixel = maskBitmap.Format.BitsPerPixel / 8;
+
+                unsafe
+                {
+                    // Iterate over each pixel in the bitmap.
+                    for (int y = 0; y < maskBitmap.PixelHeight; y++)
+                    {
+                        byte* pRow = (byte*)pBackBuffer + (y * stride);
+
+                        for (int x = 0; x < maskBitmap.PixelWidth; x++)
+                        {
+                            byte* pPixel = pRow + (x * bytesPerPixel);
+
+                            // Pixels are in BGRA format (Blue, Green, Red, Alpha)
+                            //byte blue = pPixel[0];
+                            //byte green = pPixel[1];
+                            //byte red = pPixel[2];
+                            byte alpha = pPixel[3];
+
+                            if (alpha == 255)
+                            {
+                                // If it's a red pixel, make it fully transparent (0,0,0,0)
+                                pPixel[0] = 0; // Blue
+                                pPixel[1] = 0; // Green
+                                pPixel[2] = 0; // Red
+                                pPixel[3] = 0; // Alpha (fully transparent)
+                            }
+                            else
+                            {
+                                // Make it red (0,0,255,255) - BGRA
+                                pPixel[0] = 0;   // Blue
+                                pPixel[1] = 0;   // Green
+                                pPixel[2] = 255; // Red
+                                pPixel[3] = 255; // Alpha (fully opaque)
+                            }
+                        }
+                    }
+                }
+
+                // Specify the area that has been changed.
+                // In this case, the entire bitmap might have changed.
+                maskBitmap.AddDirtyRect(new Int32Rect(0, 0, maskBitmap.PixelWidth, maskBitmap.PixelHeight));
+            }
+            finally
+            {
+                // Unlock the bitmap. This is crucial for performance and to release the buffer.
+                maskBitmap.Unlock();
+            }
+        }
+
+
+        /// <summary>
         /// Originally a function that copies white pixels from source to destination as red pixels. <br/>
         /// When mode == 0 -> copies white pixels. (original code) <br/>
         /// When mode == 1 -> copies black pixels. (inverted mask) <br/>
