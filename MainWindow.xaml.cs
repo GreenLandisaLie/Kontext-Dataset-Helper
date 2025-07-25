@@ -562,6 +562,9 @@ namespace KontextDatasetHelper
             {
                 System.IO.File.Move(BaseImagePath, _deletedDirectory + "\\base\\" + System.IO.Path.GetFileName(BaseImagePath));
                 System.IO.File.Move(RefImagePath, _deletedDirectory + "\\ref\\" + System.IO.Path.GetFileName(RefImagePath));
+
+                _imageFileNames.Remove(System.IO.Path.GetFileName(BaseImagePath));
+                _currentIndex--;
                 Next_Click(null, null);
             }
         }
